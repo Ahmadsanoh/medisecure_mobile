@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+<!-- prettier-ignore -->
+{% block title %}Portail Médecin - MediSecure{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+  <div class="col-12">
+    <h1 class="display-5 fw-bold mb-1">Bonjour, Dr. {{ request.user.prenom }} {{ request.user.nom }}</h1>
+    <p class="text-muted">Aperçu de votre journée du {{ display_date|date:"l d F Y" }}</p>
+  </div>
+</div>
+
+<style>
+  .stat-card { background: #fff; border-radius: 16px; padding: 16px; border: 1px solid #e5e9ef; text-align: center; height: 100%; transition: 0.15s; }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: #1a56db; }
+  .stat-icon { font-size: 28px; margin-bottom: 8px; }
+  .stat-value { font-size: 24px; font-weight: 700; color: #1e293b; line-height: 1.2; }
+  .stat-label { font-size: 12px; color: #94a3b8; font-weight: 600; margin-top: 4px; }
+  .quick-btn { background: #fff; border: 1px solid #e5e9ef; border-radius: 14px; padding: 16px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: 0.15s; text-decoration: none; height: 100%; }
+  .quick-btn:hover { background: #f8fafc; transform: scale(0.98); border-color: #cbd5e1; }
+  .quick-btn .q-icon { font-size: 28px; width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;}
+  .quick-btn .q-label { font-size: 13px; font-weight: 600; color: #64748b; text-align: center; }
+</style>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">{{ patients_today|default:"0" }}</div><div class="stat-label">Patients aujourd'hui</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value">{{ rdv_month|default:"0" }}</div><div class="stat-label">RDV ce mois</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value">{{ rdv_pending|default:"0" }}</div><div class="stat-label">En attente</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">{{ rdv_confirmed|default:"0" }}</div><div class="stat-label">Confirmés</div></div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <h6 class="fw-bold text-muted text-uppercase small mb-3">Actions rapides</h6>
+  </div>
+  <div class="col-6 col-md-3 mb-3 hover-shadow">
+    <a href="{% url 'portal:doctor-patients' %}" class="quick-btn">
+      <div class="q-icon" style="background:#dcfce7">📋</div>
+      <div class="q-label">Dossiers</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <a href="{% url 'portal:doctor-planning' %}" class="quick-btn">
+      <div class="q-icon" style="background:#dbeafe">📅</div>
+      <div class="q-label">Planning</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <a href="{% url 'portal:doctor-messages' %}" class="quick-btn">
+      <div class="q-icon" style="background:#f3e8ff">💬</div>
+      <div class="q-label">Messages</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <a href="{% url 'portal:doctor-patients' %}" class="quick-btn" onclick="alert('Sélectionnez un patient pour créer une ordonnance');">
+      <div class="q-icon" style="background:#fef3c7">💊</div>
+      <div class="q-label">Ordonnance</div>
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="ms-card p-0 overflow-hidden">
+      <div class="card-header bg-transparent border-0 px-4 py-4 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">Planning du {{ display_date|date:"d/m/Y" }}</h5>
+        <button class="ms-btn ms-btn-secondary btn-sm">
+          <i class="bi bi-calendar3"></i> Tout l'agenda
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="ms-table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">Heure</th>
+              <th>Patient</th>
+              <th>Motif</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rdv in rdv_jour %}
+            <tr>
+              <td class="ps-4 fw-bold text-primary">
+                {{ rdv.date_heure|time:"H:i" }}
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: 700; font-size: 0.8rem;">
+                    {{ rdv.patient.user.prenom|first }}
+                  </div>
+                  <span class="fw-semibold">{{ rdv.patient.user.prenom }} {{ rdv.patient.user.nom }}</span>
+                </div>
+              </td>
+              <td class="small">{{ rdv.motif|default:"Consultation générale" }}</td>
+              <td class="text-end pe-4">
+                <div class="d-flex justify-content-end gap-2">
+                  <a href="{% url 'portal:doctor-dossier' rdv.patient.id %}" class="ms-btn ms-btn-secondary btn-sm">
+                    Dossier
+                  </a>
+                  {% if rdv.statut != 'TERMINE' %}
+                  <form action="{% url 'portal:rdv-finish' rdv.id %}" method="post" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="ms-btn ms-btn-success btn-sm">
+                      Terminer
+                    </button>
+                  </form>
+                  {% else %}
+                  <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3 py-2">Terminé</span>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-5 text-muted">
+                <i class="bi bi-cup-hot fs-1 d-block mb-2"></i>
+                <p class="small mb-0">Aucun rendez-vous planifié aujourd'hui.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

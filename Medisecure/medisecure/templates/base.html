@@ -1,0 +1,256 @@
+﻿{% load static i18n %} {% load render_bundle from webpack_loader %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %} MediSecure {% endblock title %}</title>
+    {% block css %} {% render_bundle "project" "css" %} {% endblock css %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+      [data-theme="light"] .theme-icon-dark { display: none; }
+      [data-theme="dark"]  .theme-icon-light { display: none; }
+    </style>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script>
+      (function () {
+        const theme = localStorage.getItem("theme") || "light";
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+  </head>
+  <body class="{% block bodyclass %}{% endblock bodyclass %}">
+    {% block body %}
+    <header class="sticky-top">
+      <nav class="navbar navbar-expand-md ms-navbar">
+        <div class="container">
+          <a class="navbar-brand" href="{% url 'home' %}">
+            <i class="bi bi-shield-plus me-2"></i>MediSecure
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-md-0">
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'home' %}">Acceuil</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'about' %}">À propos</a>
+              </li>
+              {% if request.user.is_authenticated %}
+              <li class="nav-item">
+                <a
+                  class="nav-link fw-bold text-primary"
+                  href="{% url 'users:redirect' %}"
+                  >{% trans "Espace Personnel" %}</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'account_logout' %}"
+                  >{% translate "Sign Out" %}</a
+                >
+              </li>
+              {% endif %}
+            </ul>
+            <div class="d-flex align-items-center gap-3">
+              {% if not request.user.is_authenticated %}
+              <a class="nav-link px-2" href="{% url 'account_login' %}"
+                >{% trans "Se connecter" %}</a
+              >
+              <a
+                class="btn btn-premium btn-premium-primary py-2 px-4 shadow-sm"
+                href="{% url 'account_signup' %}"
+              >
+                {% trans "S'inscrire" %}
+              </a>
+              {% endif %}
+              <div class="dropdown me-1">
+                <button class="btn btn-link nav-link dropdown-toggle p-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-globe2 me-1"></i> {{ LANGUAGE_CODE|upper }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px;">
+                  {% get_current_language as LANGUAGE_CODE %}
+                  {% get_available_languages as LANGUAGES %}
+                  {% get_language_info_list for LANGUAGES as languages %}
+                  {% for language in languages %}
+                    <li>
+                      <form action="{% url 'set_language' %}" method="post">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                        <input name="language" type="hidden" value="{{ language.code }}">
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 {% if language.code == LANGUAGE_CODE %}active{% endif %}" style="border-radius: 8px;">
+                          <span>{% if language.code == 'fr' %}🇫🇷{% elif language.code == 'en' %}🇺🇸{% else %}🌐{% endif %}</span>
+                          {{ language.name_local }}
+                        </button>
+                      </form>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <button
+                class="btn btn-link nav-link p-2"
+                onclick="window.toggleTheme()"
+                title="{% trans 'Basculer le thème' %}"
+              >
+                <i class="bi bi-sun-fill theme-icon-light fs-5"></i>
+                <i class="bi bi-moon-stars-fill theme-icon-dark fs-5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <div class="container">
+      {% if messages %} {% for message in messages %}
+      <div
+        class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %} mt-3"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      <!-- prettier-ignore -->
+      {% endfor %} {% endif %} {% block main %} {% block content %}{% endblock content %} {% endblock main %}
+    </div>
+
+    {% if request.user.is_authenticated %}
+    <nav class="navbar fixed-bottom bg-white border-top shadow d-flex justify-content-around py-2 pb-3 mx-auto mb-3" style="z-index: 1050; border-radius: 30px; max-width: 500px;">
+      {% if request.user.role == 'INFIRMIER' %}
+      <a href="{% url 'portal:nurse-dashboard' %}" class="text-center text-decoration-none {% if request.resolver_match.view_name == 'portal:nurse-dashboard' %}text-primary{% else %}text-muted{% endif %}">
+      {% elif request.user.role == 'MEDECIN' %}
+      <a href="{% url 'portal:doctor-dashboard' %}" class="text-center text-decoration-none {% if request.resolver_match.view_name == 'portal:doctor-dashboard' %}text-primary{% else %}text-muted{% endif %}">
+      {% else %}
+      <a href="{% url 'portal:patient-dashboard' %}" class="text-center text-decoration-none {% if request.resolver_match.view_name == 'portal:patient-dashboard' %}text-primary{% else %}text-muted{% endif %}">
+      {% endif %}
+        <i class="bi bi-house-door fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Accueil</div>
+      </a>
+      {% if request.user.role == 'PATIENT' %}
+      <a href="{% url 'portal:patient-booking' %}" class="text-center text-decoration-none {% if 'booking' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-calendar-plus fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">RDV</div>
+      </a>
+      <a href="{% url 'portal:patient-dossier' %}" class="text-center text-decoration-none {% if 'dossier' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-clipboard2-pulse fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Dossier</div>
+      </a>
+      {% elif request.user.role == 'MEDECIN' %}
+      <a href="{% url 'portal:doctor-patients' %}" class="text-center text-decoration-none {% if 'patients' in request.path and not 'dossier' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-people fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Patients</div>
+      </a>
+      <a href="{% url 'portal:doctor-planning' %}" class="text-center text-decoration-none {% if 'planning' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-calendar-event fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Planning</div>
+      </a>
+      <a href="{% url 'portal:doctor-patients' %}" class="text-center text-decoration-none {% if 'dossier' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-folder2-open fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Dossiers</div>
+      </a>
+      {% elif request.user.role == 'INFIRMIER' %}
+      <a href="{% url 'portal:nurse-patients' %}" class="text-center text-decoration-none {% if 'patients' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-people fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Patients</div>
+      </a>
+      <a href="#" class="text-center text-decoration-none text-muted">
+        <i class="bi bi-clipboard-check fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Soins</div>
+      </a>
+      {% endif %}
+      <a href="{% if request.user.role == 'MEDECIN' %}{% url 'portal:doctor-notifications' %}{% else %}#{% endif %}" class="text-center text-decoration-none {% if 'notifications' in request.path %}text-primary{% else %}text-muted{% endif %} position-relative">
+        <i class="bi bi-bell fs-5"></i>
+        <!-- You can make the notification dot dynamic using JS later -->
+        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" id="navUnreadDot" style="display:none;"></span>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Notifs</div>
+      </a>
+      <a href="{% url 'users:detail' request.user.pk %}" class="text-center text-decoration-none {% if request.resolver_match.url_name == 'detail' %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-person-circle fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Profil</div>
+      </a>
+    </nav>
+    <style>body { padding-bottom: 80px; }</style>
+    {% endif %}
+
+    <footer class="ms-footer mt-5 pb-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 mb-4">
+            <a class="footer-logo navbar-brand mb-3 d-block" href="#">
+              <i class="bi bi-shield-plus me-2"></i>MediSecure
+            </a>
+            <p class="text-muted">
+              Votre santé, notre priorité. Une plateforme sécurisée pour vos
+              consultations et votre suivi médical.
+            </p>
+            <div class="social-links mt-4">
+              <a href="#" class="me-2"><i class="bi bi-facebook"></i></a>
+              <a href="#" class="me-2"><i class="bi bi-twitter-x"></i></a>
+              <a href="#" class="me-2"><i class="bi bi-linkedin"></i></a>
+            </div>
+          </div>
+          <div class="col-lg-2 col-md-4 mb-4">
+            <h5 class="fw-bold mb-3">Plateforme</h5>
+            <ul class="list-unstyled">
+              <li>
+                <a href="#" class="text-muted text-decoration-none"
+                  >Prendre RDV</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-muted text-decoration-none"
+                  >Téléconsultation</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="col-lg-2 col-md-4 mb-4">
+            <h5 class="fw-bold mb-3">Support</h5>
+            <ul class="list-unstyled">
+              <li>
+                <a href="#" class="text-muted text-decoration-none"
+                  >Centre d'aide</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-muted text-decoration-none">Contact</a>
+              </li>
+            </ul>
+          </div>
+          <div class="col-lg-4 col-md-4 mb-4">
+            <h5 class="fw-bold mb-3">Newsletter</h5>
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Email" />
+              <button class="btn btn-premium-primary" type="button">OK</button>
+            </div>
+          </div>
+        </div>
+        <hr class="my-4" style="opacity: 0.1" />
+        <div class="text-center text-muted small pb-4">
+          &copy; 2026 MediSecure. Tous droits réservés.
+        </div>
+      </div>
+    </footer>
+    {% endblock body %}
+    <!-- prettier-ignore -->
+    {% block inline_javascript %}{% endblock inline_javascript %}
+    <script>
+      window.toggleTheme = function () {
+        const html = document.documentElement;
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      };
+    </script>
+  </body>
+</html>
