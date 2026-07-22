@@ -1,0 +1,15 @@
+# General
+# ------------------------------------------------------------------------------
+USE_DOCKER=yes
+DATABASE_URL=postgres://hxbFRjcPwroOowDJojSCJMYhhrwXAVDE:0pnCSpVxDks0ZvYrOmn1yDvo1FG9eOg6qmoJGvLejw4JgVkRVqlTUdSbYBDygQFV@postgres:5432/medisecure
+IPYTHONDIR=/app/.ipython
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
+
+# Celery
+# ------------------------------------------------------------------------------
+
+# Flower
+CELERY_FLOWER_USER=MqSUnekgJHuTnLHbzXbNjBuayCQBQtpp
+CELERY_FLOWER_PASSWORD=KkNltAROhXOdyGiR7McHQxnwF75m1wETE2i0Yg15A4Ke37TKEHGD3NKcareeYJeI
