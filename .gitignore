@@ -1,0 +1,18 @@
+# Python
+Medisecure/.venv/
+**/__pycache__/
+*.pyc
+Medisecure/medisecure.db
+Medisecure/.envs/
+
+# Node
+Medisecure/node_modules/
+Medisecure/webpack/webpack-stats.json
+
+# Flutter
+Mobile/medisecure/mobile/.dart_tool/
+Mobile/medisecure/mobile/build/
+Mobile/medisecure/mobile/.flutter-plugins
+Mobile/medisecure/mobile/.flutter-plugins-dependencies
+Mobile/medisecure/mobile/android/.gradle/
+Mobile/medisecure/mobile/android/app/build/
